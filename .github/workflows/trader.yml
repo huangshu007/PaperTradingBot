@@ -1,0 +1,30 @@
+name: Auto Trader
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每天一次
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - run: pip install requests
+    
+    - name: Execute Trade
+      run: python trader.py
+      
+    - name: Commit
+      run: |
+        git config --global user.email "huang@treeio.dpdns.org"
+        git config --global user.name "huangshu007"
+        git add data/ README.md
+        git commit -m "💰 Trade execution: $(date +'%Y-%m-%d')"
+        git push
