@@ -2,8 +2,8 @@ name: Auto Trader
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天一次
-  workflow_dispatch:
+    - cron: '0 0 * * *' # 每天 UTC 0点运行
+  workflow_dispatch: # 允许手动触发
 
 permissions:
   contents: write
@@ -13,18 +13,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
-    - run: pip install requests
+        
+    - name: Install dependencies
+      run: pip install requests
     
     - name: Execute Trade
       run: python trader.py
       
-    - name: Commit
+    - name: Commit changes
       run: |
         git config --global user.email "huang@treeio.dpdns.org"
         git config --global user.name "huangshu007"
-        git add data/ README.md
-        git commit -m "💰 Trade execution: $(date +'%Y-%m-%d')"
-        git push
+        
+        # 修复关键点：使用 git add . 来添加所有改动
+        # 这样即使 data 文件夹还没生成，也不会报错
+        git add .
+        
+        # 只有当有实际改动时才提交，防止报错
+        git diff --quiet && git diff --staged --quiet || (git commit -m "💰 Trade execution: $(date +'%Y-%m-%d')" && git push)
